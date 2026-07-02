@@ -16,6 +16,11 @@ skills that reason about the actual content instead of just filling in a templat
 This repo has no code of its own — it documents how the three functioning pieces work together,
 and shows the workflow being used end-to-end on a real project.
 
+**Status: actively evolving, not a finished v1.** The toolchain grows with whatever the current
+project actually needs — `/project-case` didn't exist before zh-tram-flow needed it (see "In
+practice" below), and the next project will likely reshape something else. This README reflects
+the current state, not a fixed spec.
+
 ---
 
 ## The three pieces
