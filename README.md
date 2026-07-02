@@ -137,4 +137,10 @@ need judgment (does this project actually tell a coherent story? is the code qua
 superficial?) — a division of labor between deterministic scripts and an AI reviewer, not
 "AI does everything" or "AI does nothing."
 
+---
+
+**Last updated:** 2026-07-02
+**Reflects:** zh-tram-flow (current reference project)
+**Next review:** whenever the next portfolio project runs through this loop, whichever comes first
+
 Full documentation of each piece lives in its own repo — see the links above.
