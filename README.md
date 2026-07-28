@@ -1,73 +1,18 @@
 # wgnd-ai-dev-toolchain
 
-**An AI-orchestrated dev toolchain — like Cookiecutter or Yeoman, but with an AI layer driving
-bootstrap, review, and portfolio packaging instead of static templates alone.**
+**Eine KI-orchestrierte Entwickler-Toolchain – vergleichbar mit Cookiecutter oder Yeoman, jedoch mit einer KI-Schicht, die Bootstrap, Review und Portfolio-Aufbereitung steuert, anstatt sich ausschließlich auf statische Templates zu verlassen.**
 
-Every new data project starts with the same repetitive setup: the same folder structure, the
-same five documentation files, the same EDA boilerplate, the same audit checklist before
-anything is portfolio-ready. Doing that by hand every time is slow and inconsistent — details
-get skipped under time pressure, conventions drift between projects, and nothing enforces that
-a "finished" project actually meets a fixed quality bar. This toolchain splits the work along a
-clear line: deterministic, repeatable steps (folder structure, boilerplate, artifact generation)
-are handled by scripts, while judgment calls (is this project's story coherent? is the code
-quality real or superficial? which slides go in which presentation?) are handled by Claude Code
-skills that reason about the actual content instead of just filling in a template.
+Jedes neue Datenprojekt beginnt mit denselben wiederkehrenden Einrichtungsschritten: derselben Ordnerstruktur, denselben fünf Dokumentationsdateien, demselben EDA-Grundgerüst und derselben Audit-Checkliste, bevor ein Projekt überhaupt portfoliofähig ist. Das jedes Mal von Hand zu erledigen, ist langsam und inkonsistent – unter Zeitdruck werden Details ausgelassen, Konventionen unterscheiden sich von Projekt zu Projekt, und nichts stellt sicher, dass ein „fertiges“ Projekt tatsächlich einen festen Qualitätsstandard erfüllt. Diese Toolchain trennt die Arbeit klar auf: deterministische, wiederholbare Schritte (Ordnerstruktur, Boilerplate, Artefakt-Generierung) werden von Skripten übernommen, während Entscheidungen mit fachlichem Urteilsvermögen (ist die Story des Projekts schlüssig? Ist die Codequalität tatsächlich gut oder nur oberflächlich? Welche Folien gehören in welche Präsentation?) von Claude-Code-Skills getroffen werden, die den tatsächlichen Inhalt analysieren, anstatt lediglich Vorlagen auszufüllen.
 
-This repo has no code of its own — it documents how the three functioning pieces work together,
-and shows the workflow being used end-to-end on a real project.
+Dieses Repository enthält keinen eigenen Code – es dokumentiert, wie die drei funktionierenden Bestandteile zusammenspielen, und zeigt den vollständigen Workflow anhand eines realen Projekts.
 
-**Status: actively evolving, not a finished v1.** The toolchain grows with whatever the current
-project actually needs — `/project-case` didn't exist before zh-tram-flow needed it (see "In
-practice" below), and the next project will likely reshape something else. This README reflects
-the current state, not a fixed spec.
+**Status: aktiv in Entwicklung, kein abgeschlossenes v1.** Die Toolchain wächst mit den Anforderungen des jeweils aktuellen Projekts – `/project-case` existierte beispielsweise noch nicht, bevor es für *zh-tram-flow* benötigt wurde (siehe „In der Praxis“ weiter unten), und das nächste Projekt wird wahrscheinlich andere Bereiche weiterentwickeln. Dieses README beschreibt den aktuellen Stand und keine unveränderliche Spezifikation.
 
 ---
 
-## The three pieces
+## Architektur
 
-| Repo | Role | Type |
-| :--- | :--- | :--- |
-| [wgnd-scaffolding](https://github.com/kaywiegand/wgnd-scaffolding) | Deterministic project generator for data projects | CLI |
-| [wgnd-toolkit](https://github.com/kaywiegand/wgnd-toolkit) | EDA/visualization helpers used inside the generated notebooks | Python package |
-| [wgnd-skills](https://github.com/kaywiegand/wgnd-skills) | Claude Code skills driving bootstrap, audit, and portfolio packaging | Claude Code skills |
-
-### [wgnd-scaffolding](https://github.com/kaywiegand/wgnd-scaffolding)
-
-A CLI that writes the standard skeleton for a new data project in one shot: the folder layout
-(`data/raw|interim|processed`, `notebooks/`, `src/`, `tests/`), the five baseline documentation
-files (`CLAUDE.md`, `PROCESS_LOG.md`, `ROADMAP.md`, `BACKLOG.md`, `README.md`), and a
-`pyproject.toml` matching the project type. It distinguishes two data-project types — DAN (Data
-Analysis) and DSC (Data Science) — and initializes git for the new project automatically. The
-point isn't cleverness, it's determinism: run it twice with the same input, get the same
-skeleton, every time. That reliability is what makes it safe for `/project-init` to delegate to
-it without supervision.
-
-### [wgnd-toolkit](https://github.com/kaywiegand/wgnd-toolkit)
-
-A small Python package of reusable EDA and visualization helpers — inspection functions
-(duplicates, correlations, missing values), themed Plotly chart builders, and export utilities —
-imported inside the notebooks that `wgnd-scaffolding` generates. It exists so that every project
-doesn't reinvent the same `df.duplicated()` sanity-check or restyle its charts from scratch;
-one shared, tested library means a fix or a style change propagates to every project that
-imports it, instead of being copy-pasted and drifting.
-
-### [wgnd-skills](https://github.com/kaywiegand/wgnd-skills)
-
-Three Claude Code skills that cover the parts of the lifecycle that need judgment, not just
-mechanics:
-
-- **`/project-init`** — the single entry point for starting a new project. For data projects it
-  delegates to `wgnd-scaffolding`; for web/tool/general projects it writes its own generic docs.
-- **`/project-review`** — a read-only audit loop. Checks project structure, README quality,
-  coherence between documentation files, and git hygiene against a fixed standard
-  (`case-standards.md`), and reports gaps instead of silently accepting a half-finished project.
-- **`/project-case`** — builds the actual portfolio artifacts for a data project once it passes
-  review: extracts the story, drives an interactive slide-authoring dialog (`slides.yaml`), and
-  generates the presentation views + navigation hub via a mechanical build pipeline.
-
----
-
-## Architecture
+![AI DEV TOOLCHAIN overview](wgnd-ai-dev-overview.png)
 
 ```mermaid
 flowchart TD
@@ -78,14 +23,13 @@ flowchart TD
     R --> P["Portfolio-ready project<br/>public/ as web root"]
 ```
 
-`/project-init` is the single entry point. For data projects it delegates to `wgnd-scaffolding`;
-for web/tool/general projects it writes its own generic docs. Either way, the result is a
-standard skeleton that `wgnd-toolkit` gets used inside of, and that `/project-review` later
-audits against a fixed quality bar.
+`/project-init` ist der zentrale Einstiegspunkt. Für Datenprojekte delegiert der Skill an `wgnd-scaffolding`; für Web-, Tool- und allgemeine Projekte erstellt er seine eigene generische Dokumentation. In beiden Fällen entsteht ein standardisiertes Projektgerüst, innerhalb dessen `wgnd-toolkit` verwendet wird und das später von `/project-review` anhand eines festen Qualitätsstandards geprüft wird.
 
 ---
 
 ## Workflow
+
+![AI DEV TOOLCHAIN workflow](wgnd-ai-dev-workflow.png)
 
 ```mermaid
 flowchart TD
@@ -98,17 +42,45 @@ flowchart TD
     MC --> L
 ```
 
-`/project-review` is a loop, not a gate you pass once — it runs repeatedly until the project
-clears the bar. Only then does `/project-case` (data projects) or a manual write-up (tool/meta
-projects, like this repo) turn it into portfolio artifacts.
+`/project-review` ist ein iterativer Prozess und keine einmalige Freigabe – der Skill wird wiederholt ausgeführt, bis das Projekt den definierten Qualitätsstandard erfüllt. Erst danach erzeugt `/project-case` (für Datenprojekte) beziehungsweise eine manuelle Ausarbeitung (für Tool- oder Meta-Projekte wie dieses Repository) die Portfolio-Artefakte.
 
 ---
 
-## In practice — zh-tram-flow
+## Die drei Bestandteile
 
-Not a design exercise — this is what actually happened building
-[zh-tram-flow](https://github.com/kaywiegand/zh-tram-flow), a tram-delay analysis + prediction
-portfolio project:
+| Repository | Rolle | Typ |
+| :--- | :--- | :--- |
+| [wgnd-scaffolding](https://github.com/kaywiegand/wgnd-scaffolding) | Deterministischer Projektgenerator für Datenprojekte | CLI |
+| [wgnd-toolkit](https://github.com/kaywiegand/wgnd-toolkit) | EDA- und Visualisierungs-Helfer für die generierten Notebooks | Python-Paket |
+| [wgnd-skills](https://github.com/kaywiegand/wgnd-skills) | Claude-Code-Skills für Bootstrap, Audit und Portfolio-Aufbereitung | Claude-Code-Skills |
+
+### [wgnd-scaffolding](https://github.com/kaywiegand/wgnd-scaffolding)
+
+Eine CLI, die das Standardgerüst für ein neues Datenprojekt in einem Schritt erzeugt: die Ordnerstruktur (`data/raw|interim|processed`, `notebooks/`, `src/`, `tests/`), die fünf grundlegenden Dokumentationsdateien (`CLAUDE.md`, `PROCESS_LOG.md`, `ROADMAP.md`, `BACKLOG.md`, `README.md`) sowie eine zum Projekttyp passende `pyproject.toml`. Sie unterscheidet zwischen den beiden Datenprojekt-Typen DAN (Data Analysis) und DSC (Data Science) und initialisiert automatisch ein Git-Repository. Der entscheidende Punkt ist nicht Raffinesse, sondern Determinismus: Wird die CLI zweimal mit denselben Eingaben ausgeführt, entsteht jedes Mal exakt dasselbe Projektgerüst. Genau diese Zuverlässigkeit ermöglicht es `/project-init`, ohne weitere Überwachung an sie zu delegieren.
+
+![wgnd scaffolding overview](wgnd-scaffolding-overview.png)
+
+### [wgnd-toolkit](https://github.com/kaywiegand/wgnd-toolkit)
+
+Ein kleines Python-Paket mit wiederverwendbaren EDA- und Visualisierungshilfen – darunter Funktionen zur Dateninspektion (Duplikate, Korrelationen, fehlende Werte), thematisierte Plotly-Diagrammerzeugung und Exportfunktionen –, das innerhalb der von `wgnd-scaffolding` erzeugten Notebooks importiert wird. Sein Zweck besteht darin, zu vermeiden, dass jedes Projekt dieselben `df.duplicated()`-Prüfungen oder Diagramm-Styles erneut implementieren muss. Eine gemeinsame, getestete Bibliothek sorgt dafür, dass Fehlerbehebungen oder Designänderungen automatisch allen Projekten zugutekommen, anstatt kopiert zu werden und mit der Zeit auseinanderzulaufen.
+
+![wgnd toolkit overview](wgnd-toolkit-overview.png)
+
+### [wgnd-skills](https://github.com/kaywiegand/wgnd-skills)
+
+Drei Claude-Code-Skills decken die Phasen des Projektlebenszyklus ab, die fachliches Urteilsvermögen erfordern und nicht nur mechanische Abläufe:
+
+- **`/project-init`** – der zentrale Einstiegspunkt zum Start eines neuen Projekts. Für Datenprojekte delegiert der Skill an `wgnd-scaffolding`; für Web-, Tool- und allgemeine Projekte erstellt er eine eigene generische Dokumentation.
+- **`/project-review`** – ein schreibgeschützter Audit-Zyklus. Er prüft Projektstruktur, Qualität des READMEs, Konsistenz zwischen den Dokumentationsdateien und Git-Hygiene anhand eines festen Standards (`case-standards.md`) und meldet bestehende Lücken, anstatt halbfertige Projekte stillschweigend zu akzeptieren.
+- **`/project-case`** – erzeugt nach erfolgreichem Review die eigentlichen Portfolio-Artefakte eines Datenprojekts: extrahiert die Projektgeschichte, führt einen interaktiven Dialog zur Folienerstellung (`slides.yaml`) und erstellt anschließend über eine mechanische Build-Pipeline die Präsentationsansichten und den Navigations-Hub.
+
+![wgnd skills overview](wgnd-skills-overview.png)
+
+---
+
+## In der Praxis – zh-tram-flow
+
+Keine theoretische Designübung – so verlief die Entwicklung von [zh-tram-flow](https://github.com/kaywiegand/zh-tram-flow), einem Portfolio-Projekt zur Analyse und Vorhersage von Straßenbahnverspätungen:
 
 ```mermaid
 flowchart TD
@@ -120,27 +92,19 @@ flowchart TD
     F --> G["Portfolio live<br/>kaywiegand.github.io/zh-tram-flow"]
 ```
 
-The interesting detail is step E: `/project-case` didn't exist in finished form when
-zh-tram-flow needed it. The skill was built *during* the project, driven by a concrete gap
-(no mechanized way to generate the three presentation views), then generalized into
-`wgnd-skills` so the next project gets it for free. The toolchain and the portfolio project
-co-evolved — the tooling wasn't designed upfront in isolation.
+Das interessante Detail ist Schritt E: `/project-case` existierte noch nicht in fertiger Form, als *zh-tram-flow* diese Funktionalität benötigte. Der Skill entstand **während** des Projekts, ausgelöst durch eine konkrete Lücke (es gab keinen automatisierten Weg, die drei Präsentationsansichten zu erzeugen), und wurde anschließend verallgemeinert und in `wgnd-skills` integriert, sodass das nächste Projekt davon automatisch profitiert. Die Toolchain und das Portfolio-Projekt entwickelten sich gemeinsam weiter – die Werkzeuge wurden nicht isoliert im Voraus entworfen.
 
 ---
 
-## Why this exists
+## Warum diese Toolchain existiert
 
-Bootstrapping, reviewing, and packaging a data project by hand is repetitive and error-prone —
-the same five MD-files, the same audit checklist, the same artifact pipeline, every time.
-This toolchain automates the mechanical parts and uses Claude Code skills for the parts that
-need judgment (does this project actually tell a coherent story? is the code quality real or
-superficial?) — a division of labor between deterministic scripts and an AI reviewer, not
-"AI does everything" or "AI does nothing."
+Das Aufsetzen, Überprüfen und Portfolio-gerechte Aufbereiten eines Datenprojekts von Hand ist repetitiv und fehleranfällig – jedes Mal dieselben fünf Markdown-Dateien, dieselbe Audit-Checkliste und dieselbe Artefakt-Pipeline. Diese Toolchain automatisiert die mechanischen Bestandteile und nutzt Claude-Code-Skills für die Aufgaben, die fachliches Urteilsvermögen erfordern (erzählt das Projekt tatsächlich eine schlüssige Geschichte? Ist die Codequalität wirklich überzeugend oder nur oberflächlich?). Das Ergebnis ist eine klare Arbeitsteilung zwischen deterministischen Skripten und einem KI-gestützten Reviewer – nicht „KI macht alles“, aber ebenso wenig „KI macht nichts“.
 
 ---
 
-**Last updated:** 2026-07-02
-**Reflects:** zh-tram-flow (current reference project)
-**Next review:** whenever the next portfolio project runs through this loop, whichever comes first
+**Zuletzt aktualisiert:** 2026-07-02  
+**Bezieht sich auf:** zh-tram-flow (aktuelles Referenzprojekt)  
+**Nächste Überprüfung:** sobald das nächste Portfolio-Projekt diesen Workflow durchläuft – je nachdem, was zuerst eintritt
 
-Full documentation of each piece lives in its own repo — see the links above.
+Die vollständige Dokumentation der einzelnen Bestandteile befindet sich jeweils im entsprechenden Repository – siehe die Links oben.
+
